@@ -57,6 +57,8 @@ SUBROUTINE TECPLOT
 		!      WRITE(112,*)'VARIABLES= "Location","Depth","EastV","NorthV","WvHt","TauWC","C"'
 !        WRITE(112,*)'VARIABLES= "X","Y","TAU","D50","THCK"'
 
+!       Adding component velocities and MHS07 data to Vel_Cal.dat file
+
 !CF 5/19/2014	Adding MHS07 header data to Vel_Cal.dat
         OPEN (UNIT=112,FILE='Vel_Cal.dat')
 !		WRITE(112,'(A30)')'TITLE = "Fox Percentage Data"'
