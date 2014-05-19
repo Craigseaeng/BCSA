@@ -57,10 +57,11 @@ SUBROUTINE TECPLOT
 		!      WRITE(112,*)'VARIABLES= "Location","Depth","EastV","NorthV","WvHt","TauWC","C"'
 !        WRITE(112,*)'VARIABLES= "X","Y","TAU","D50","THCK"'
 
+!CF 5/19/2014	Adding MHS07 header data to Vel_Cal.dat
         OPEN (UNIT=112,FILE='Vel_Cal.dat')
 !		WRITE(112,'(A30)')'TITLE = "Fox Percentage Data"'
 		!      WRITE(112,*)'VARIABLES= "Location","Depth","EastV","NorthV","WvHt","TauWC","C"'
-        WRITE(112,*)'Time,H1,Vel1,Dye1,H2,Vel2,Dye2,H5,Vel5,Dye5,H6,Vel6,Dye6'
+        WRITE(112,*)'Time,H1,Vel1,Dye1,H2,Vel2,Dye2,H5,Vel5,Dye5,H6,Vel6,Dye6,H7,Vel7,Dye7'
 
         OPEN (UNIT=113,FILE='Flow_Cal.dat')
         WRITE(113,*)'Time,Flow_1,Flow_2,Flow_5,Flow_6a,Flow_6'
@@ -183,8 +184,9 @@ SUBROUTINE TECPLOT
 		ENDDO
         VMAG(L)=SQRT(U(L,1)**2+V(L,1)**2) 
 	ENDDO
-
-     WRITE(112,'(15E11.4)')  tbegin+float(nstep-1)*deltat*float(ishprt)/86400.0,SURFEL(LIJ(122,114)),VMAG(LIJ(122,114)),DYE(LIJ(122,114),1),SURFEL(LIJ(45,29)),VMAG(LIJ(45,29)),DYE(LIJ(45,29),1),SURFEL(LIJ(39,202)),VMAG(LIJ(39,202)),DYE(LIJ(39,203),1),SURFEL(LIJ(119,312)),VMAG(LIJ(119,312)),DYE(LIJ(119,312),1)
+	
+!CF 5/19/2014	Adding MHS07 data to Vel_Cal.dat
+     WRITE(112,'(15E11.4)')  tbegin+float(nstep-1)*deltat*float(ishprt)/86400.0,SURFEL(LIJ(122,114)),VMAG(LIJ(122,114)),DYE(LIJ(122,114),1),SURFEL(LIJ(45,29)),VMAG(LIJ(45,29)),DYE(LIJ(45,29),1),SURFEL(LIJ(39,202)),VMAG(LIJ(39,202)),DYE(LIJ(39,203),1),SURFEL(LIJ(119,312)),VMAG(LIJ(119,312)),DYE(LIJ(119,312),1),SURFEL(LIJ(130,349)),VMAG(LIJ(130,349)),DYE(LIJ(130,349),1)
 !     WRITE(113,'(6E11.3)')  tbegin+float(nstep-1)*deltat*float(ishprt)/86400.0,Waterflowtot(1),Waterflowtot(2),Waterflowtot(3),Waterflowtot(4),Waterflowtot(5)
 
 ! 2 Dimensional Output
