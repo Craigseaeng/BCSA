@@ -1,4 +1,4 @@
-  ! CF 5/19/2014
+
       SUBROUTINE ACON(ITVAL)  
 C  
 C CHANGE RECORD  
