@@ -189,9 +189,7 @@ SUBROUTINE TECPLOT
 	ENDDO
 	
 !CF 5/19/2014	Adding component velocities and MHS07 data to Vel_Cal.dat
-     WRITE(112,'(15E11.4)')  tbegin+float(nstep-1)*deltat*float(ishprt)/86400.0,SURFEL(LIJ(122,114)),U(LIJ(122,114),1),V(LIJ(122,114),1),DYE(LIJ(122,114),1), & 
-     SURFEL(LIJ(45,29)),U(LIJ(45,29),1),V(LIJ(45,29),1),DYE(LIJ(45,29),1),SURFEL(LIJ(39,202)),U(LIJ(39,202),1),V(LIJ(39,202),1),DYE(LIJ(39,202),1), & 
-     SURFEL(LIJ(119,312)),U(LIJ(119,312),1),V(LIJ(119,312),1),DYE(LIJ(119,312),1),SURFEL(LIJ(130,349)),U(LIJ(130,349),1),V(LIJ(130,349),1),DYE(LIJ(130,349),1)
+     WRITE(112,'(21E11.3)')  tbegin+float(nstep-1)*deltat*float(ishprt)/86400.0,SURFEL(LIJ(122,114)),U(LIJ(122,114),1),V(LIJ(122,114),1),DYE(LIJ(122,114),1),SURFEL(LIJ(45,29)),U(LIJ(45,29),1),V(LIJ(45,29),1),DYE(LIJ(45,29),1),SURFEL(LIJ(39,202)),U(LIJ(39,202),1),V(LIJ(39,202),1),DYE(LIJ(39,202),1),SURFEL(LIJ(119,312)),U(LIJ(119,312),1),V(LIJ(119,312),1),DYE(LIJ(119,312),1),SURFEL(LIJ(130,349)),U(LIJ(130,349),1),V(LIJ(130,349),1),DYE(LIJ(130,349),1)
 !     WRITE(113,'(6E11.3)')  tbegin+float(nstep-1)*deltat*float(ishprt)/86400.0,Waterflowtot(1),Waterflowtot(2),Waterflowtot(3),Waterflowtot(4),Waterflowtot(5)
 
 ! 2 Dimensional Output
