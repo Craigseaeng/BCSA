@@ -6,20 +6,20 @@ SUBROUTINE SEDZLJ_SHEAR
   INTEGER::L
   INTEGER::M1,M2
   INTEGER::FZONE
-  !PT: All real values are explicitly written in DOUBLE PRECISION 7/16/08.
-  DOUBLE PRECISION::MMW,SIGMAWV,JJW
-  DOUBLE PRECISION::VELMAG,VELANG,DELW,APROUGH
-  DOUBLE PRECISION::UTMP,VTMP
-  DOUBLE PRECISION::WVLENGTH,WVANGLE,WFTIM,EXCURSION
-  DOUBLE PRECISION::FC1,FC2,FWINDSQ
-  DOUBLE PRECISION::FWINDS,FWINDD
-  DOUBLE PRECISION::TDIFF,WTM1,WTM2,AVGDEPTH
-  DOUBLE PRECISION,DIMENSION(LCM)::ZBTEMP
+!
+  REAL::MMW,SIGMAWV,JJW
+  REAL::VELMAG,VELANG,DELW,APROUGH
+  REAL::UTMP,VTMP
+  REAL::WVLENGTH,WVANGLE,WFTIM,EXCURSION
+  REAL::FC1,FC2,FWINDSQ
+  REAL::FWINDS,FWINDD
+  REAL::TDIFF,WTM1,WTM2,AVGDEPTH
+  REAL,DIMENSION(LCM)::ZBTEMP
   
   ! CALCULATES Wave and Current Shear Stress Based on Log-Law of Cristofferson Jonsson
   ! 
-  ! REVISION DATE :  May 24, 2007
-  ! Craig Jones and Scott James
+  ! REVISION DATE : 2014
+  ! Craig Jones
   !**************************************************************************
   ! Check to see if we've set a constant Tau
   
@@ -27,11 +27,11 @@ SUBROUTINE SEDZLJ_SHEAR
      !
      !******************************************************
      IF(ISWNWAVE==1)THEN
-        !
-        !**************************************************************************
-        ! Wind Wave Fetch
-        !
-        ! Convert wind input into current wind info for wind-driven wave calcs
+!        !
+!        !**************************************************************************
+!        ! Wind Wave Fetch
+!        !
+!        ! Convert wind input into current wind info for wind-driven wave calcs
         IF(ISDYNSTP==0)THEN  
            WFTIM=DT*FLOAT(N)/TCWSER(1)+TBEGIN*(TCON/TCWSER(1))  
         ELSE  
@@ -230,7 +230,7 @@ SUBROUTINE SEDZLJ_SHEAR
   ELSE !Set constant tau is TAUCONST (dynes/cm^2) is greater than 0
      DO L=2,LA
         TAU(L)=TAUCONST
- !       TAUB(L)=0.1*TAU(L) !Don't overwrtie EFDC's shear stress.
+! !       TAUB(L)=0.1*TAU(L) !DEBUG ONLY - Don't overwrtie EFDC's shear stress.
         USTAR(L)=SQRT(TAUB(L)/1000.)
      ENDDO
   ENDIF
