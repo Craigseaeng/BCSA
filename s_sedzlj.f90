@@ -266,19 +266,22 @@ SUBROUTINE SEDZLJ(L)
      ENDDO
      ! Interpolate the erosion rates for shear stress and depth.
      ! This utilizes normal sedflume data for deeper layers.
+
      IF(LL>2)THEN !calculate erosion rates of deeper layers
-        SN00=(TAUDD(2)-TAU(L))/(TAUDD(2)-TAUDD(1)) !weighting factor 1 for interpolation
-        SN10=(TAUDD(1)-TAU(L))/(TAUDD(1)-TAUDD(2)) !weighting factor 2
-        SN01=TSED(LL,L)/TSED0(LL,L)                !weighting factor 3
-        SN11=(TSED0(LL,L)-TSED(LL,L))/TSED0(LL,L)  !weighting factor 4
-        
-        IF(LL+1<=KB)THEN !modeled erosion rate in g/cm2/s
-           ERATEMOD(L)=(SN00*EXP(SN11*LOG(ERATE(LL+1,L,NTAU0))+SN01*LOG(ERATE(LL,L,NTAU0)))&
-                +SN10*EXP(SN11*LOG(ERATE(LL+1,L,NTAU1))+SN01*LOG(ERATE(LL,L,NTAU1))))*BULKDENS(LL,L)*SQRT(1.0/SH_SCALE(L))
-        ELSE !do not allow erosion through the bottom layer
-           ERATEMOD(L)=(SN00*EXP(SN11*LOG(1.0E-9)+SN01*LOG(ERATE(LL,L,NTAU0)))&
-                +SN10*EXP(SN11*LOG(1.0E-9)+SN01*LOG(ERATE(LL,L,NTAU1))))*BULKDENS(LL,L)*SQRT(1.0/SH_SCALE(L))
+!        SN00=(TAUDD(2)-TAU(L))/(TAUDD(2)-TAUDD(1)) !weighting factor 1 for interpolation
+!        SN10=(TAUDD(1)-TAU(L))/(TAUDD(1)-TAUDD(2)) !weighting factor 2
+        SN00=A_P(LL,L)*(TAU(L)/10)**N_P(LL,L) ! Erosion rate 1 (cm/s) Values assume shear in Pascals so conversion made here
+
+        IF(LL+1<=KB)THEN !modeled erosion rate in g/cm2/s Limited by bottom
+          SN10=A_P(LL+1,L)*(TAU(L)/10)**N_P(LL+1,L) ! Erosion rate 2
+        ELSE
+          SN10=0.0
         ENDIF
+
+        SN11=(TSED0(LL,L)-TSED(LL,L))  !weighting factor
+       
+        ERATEMOD(L)=((SN10-SN00)/TSED0(LL,L)*SN11+SN00)*BULKDENS(LL,L)*SQRT(1./SH_SCALE(L)) !linear interpolation around size class (g/cm2/s)
+
      ELSE
 
         ! For Layers One and Two (the newly deposited sediments)

@@ -5,10 +5,13 @@ SUBROUTINE SEDIC
   INTEGER::IWV,JWV,NSKIP
   CHARACTER(LEN=80)::STR_LINE
   !PT- real values are written in DOUBLE PRECISION. 7/16/08
-  DOUBLE PRECISION::STWVHTMP,STWVTTMP,STWVDTMP
-  DOUBLE PRECISION,ALLOCATABLE,DIMENSION(:,:)::BDEN   !(INCORE,KB)
-  DOUBLE PRECISION,ALLOCATABLE,DIMENSION(:,:)::TAUTEMP   !(KB)
-  DOUBLE PRECISION,ALLOCATABLE,DIMENSION(:,:,:)::PNEW    !(INCORE,KB,NSCM)
+  REAL::STWVHTMP,STWVTTMP,STWVDTMP
+  REAL,ALLOCATABLE,DIMENSION(:,:)::BDEN   !(INCORE,KB)
+  REAL,ALLOCATABLE,DIMENSION(:,:)::TAUTEMP   !(KB)
+  REAL,ALLOCATABLE,DIMENSION(:,:,:)::PNEW    !(INCORE,KB,NSCM)
+  REAL,ALLOCATABLE,DIMENSION(:,:)::ATEMP 
+  REAL,ALLOCATABLE,DIMENSION(:,:)::NTEMP
+
   ! Reads in Initial Erosion data.
   ! Reads in Erosion Data for Newly deposited 
   ! Sediments.
@@ -62,34 +65,22 @@ SUBROUTINE SEDIC
   READ (10,*) (TSED0S(LL),LL=1,KB)
   READ (10,'(A80)') STR_LINE
   READ (10,*) TACTM !read in active layer multiplier
-  ! Read in Initial Erosion Data
+! Read in Initial Erosion Data
   IF(VAR_BED>=1)THEN    
-     ! Variable Bed *************************************************
+! Variable Bed *************************************************
      READ(20,*)INCORE !read the number of cores    
      ALLOCATE(TAUTEMP(INCORE,KBM))
      ALLOCATE(PNEW(INCORE,KBM,NSCM+1))
      ALLOCATE(BDEN(INCORE,KBM))
+     ALLOCATE(NTEMP(INCORE,KBM))
+     ALLOCATE(ATEMP(INCORE,KBM))
      TAUTEMP=0.0
      PNEW=0.0
      BDEN=0.0   
      DO J=JC,1,-1
-       IF(IC>360)THEN
-        READ(20,'(120(I1,1X))')(NCORENO(I,J),I=1,120)
-        READ(20,'(120(I1,1X))')(NCORENO(I,J),I=121,240)
-        READ(20,'(120(I1,1X))')(NCORENO(I,J),I=241,360)
-        READ(20,'(120(I1,1X))')(NCORENO(I,J),I=361,IC)
-       ELSEIF(IC>240)THEN
-        READ(20,'(120(I1,1X))')(NCORENO(I,J),I=1,120)
-        READ(20,'(120(I1,1X))')(NCORENO(I,J),I=121,240)
-        READ(20,'(120(I1,1X))')(NCORENO(I,J),I=241,IC)
-       ELSEIF(IC>120)THEN
-        READ(20,'(120(I1,1X))')(NCORENO(I,J),I=1,120)
-        READ(20,'(120(I1,1X))')(NCORENO(I,J),I=121,IC)
-       ELSE
-        READ(20,'(120(I1,1X))')(NCORENO(I,J),I=1,IC)
-       ENDIF   
+        READ(20,'(120(I1,1X))')(NCORENO(I,J),I=1,IC)   
      ENDDO
-     !*************************************************************   
+ !*************************************************************   
      DO CORE=1,INCORE !for each core of data      
        READ (10,'(A80)') STR_LINE
        READ(10,*)(TAUTEMP(CORE,LL),LL=1,KB) !read the critical shear stresses of the core
@@ -100,32 +91,39 @@ SUBROUTINE SEDIC
        READ (10,'(A80)') STR_LINE	
        DO LL=1,KB
          READ(10,*)(PNEW(CORE,LL,K),K=1,NSCM)
-       ENDDO       
-       READ (10,'(A80)') STR_LINE
-       DO K=1,ITBM
-         READ(10,*)TAULOC(K) !shear stress used to erode a portion of the core
-         READ(10,*)(ERATETEMP(CORE,LL,K),LL=1,KB) !erosion rate for each layer subject to shear stress TAULOC
        ENDDO
+              
+       READ (10,'(A80)') STR_LINE
+       DO LL=1,KB
+         READ(10,*) ATEMP(CORE,LL),NTEMP(CORE,LL)
+       ENDDO
+!       DO K=1,ITBM
+!         READ(10,*)TAULOC(K) !shear stress used to erode a portion of the core
+!         READ(10,*)(ERATETEMP(CORE,LL,K),LL=1,KB) !erosion rate for each layer subject to shear stress TAULOC
+!       ENDDO
      ENDDO     
      DO L=2,LA
        I=IL(L) !I location as a function of L
        J=JL(L) !J location as a function of L      
        TAUCOR(1:KB,L)=TAUTEMP(NCORENO(I,J),1:KB) !Critical shear stresses from cores
        DO LL=1,KB
-         FORALL(M=1:ITBM)ERATE(LL,L,M)=ERATETEMP(NCORENO(I,J),LL,M) !set erosion rate to measured value
+!         FORALL(M=1:ITBM)ERATE(LL,L,M)=ERATETEMP(NCORENO(I,J),LL,M) !set erosion rate to measured value
+
          FORALL(K=1:NSCM)PER(K,LL,L)=PNEW(NCORENO(I,J),LL,K)/100.0 !set mass fraction to measured value
-!         IF(BSC>0.0)THEN !if variable density, take it into account
-!           BULKDENS(LL,L)=BDENBED(L,LL) !set bulk density equal to that from EFDC calcs
-!         ELSE
-           BULKDENS(LL,L)=(SEDDENS/(SEDDENS-WATERDENS))*(BDEN(NCORENO(I,J),LL)-1.0)      !eqn. 20a
-!         ENDIF
+         A_P(LL,L)=ATEMP(NCORENO(I,J),LL)
+         N_P(LL,L)=NTEMP(NCORENO(I,J),LL)
+         BULKDENS(LL,L)=(SEDDENS/(SEDDENS-WATERDENS))*(BDEN(NCORENO(I,J),LL)-1.0)  !Converts wet to dry bulk density
+
        ENDDO
      ENDDO  
-     ! Constant Erosion in Horizontal ********************************
+! Constant Erosion in Horizontal ********************************
    ELSE
      ALLOCATE(TAUTEMP(1,KBM))
      ALLOCATE(PNEW(1,KBM,NSCM))
      ALLOCATE(BDEN(1,KBM))   
+     ALLOCATE(NTEMP(1,KBM))
+     ALLOCATE(ATEMP(1,KBM))
+
      CORE=1    
      READ (10,'(A80)') STR_LINE
      READ(10,*)(TAUTEMP(CORE,LL),LL=1,KB) !read the critical shear stresses of the core
@@ -139,21 +137,23 @@ SUBROUTINE SEDIC
      ENDDO
      
      READ (10,'(A80)') STR_LINE
-     DO K=1,ITBM
-        READ(10,*)TAULOC(K) !shear stress used to erode a portion of the core
-        READ(10,*)(ERATETEMP(CORE,LL,K),LL=1,KB) !erosion rate for each layer subject to shear stress TAULOC
+     DO LL=1,KB
+       READ(10,*) ATEMP(CORE,LL),NTEMP(CORE,LL)
      ENDDO
+!     DO K=1,ITBM
+!        READ(10,*)TAULOC(K) !shear stress used to erode a portion of the core
+!        READ(10,*)(ERATETEMP(CORE,LL,K),LL=1,KB) !erosion rate for each layer subject to shear stress TAULOC
+!     ENDDO
+
      
      DO L=2,LA
         DO LL=1,KB
            TAUCOR(LL,L)=TAUTEMP(1,LL)
-           FORALL(M=1:ITBM)ERATE(LL,L,M)=ERATETEMP(1,LL,M)
+!           FORALL(M=1:ITBM)ERATE(LL,L,M)=ERATETEMP(1,LL,M)
+           A_P(LL,L)=ATEMP(1,LL)
+           N_P(LL,L)=NTEMP(1,LL)
            FORALL(K=1:NSCM)PER(K,LL,L)=PNEW(1,LL,K)/100.0
-           IF(BSC>0.0)THEN !if variable density, take it into account
-             BULKDENS(LL,L)=((SEDDENS)/(SEDDENS-(B(L,1)+1.0)*1.0000))*(BDEN(1,LL)-1.0) !bulk density from SEDZLJ-type input !SCJ
-           ELSE
-             BULKDENS(LL,L)=((SEDDENS)/(SEDDENS-WATERDENS))*(BDEN(1,LL)-1.0) !bulk density from SEDZLJ-type input
-           ENDIF
+           BULKDENS(LL,L)=((SEDDENS)/(SEDDENS-WATERDENS))*(BDEN(1,LL)-1.0) !bulk density from SEDZLJ-type input
         ENDDO
      ENDDO
      
@@ -302,7 +302,7 @@ SUBROUTINE SEDIC
   WRITE(6,*)BULKDENS(3,3)
   WRITE(6,*)'**************************************'
   
-  DEALLOCATE(TAUTEMP,BDEN,PNEW)
+  DEALLOCATE(TAUTEMP,BDEN,PNEW,NTEMP,ATEMP)
   CLOSE(10)
   CLOSE(20)
   CLOSE(30)
