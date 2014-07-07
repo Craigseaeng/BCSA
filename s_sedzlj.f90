@@ -272,7 +272,7 @@ SUBROUTINE SEDZLJ(L)
         SN01=TSED(LL,L)/TSED0(LL,L)                !weighting factor 3
         SN11=(TSED0(LL,L)-TSED(LL,L))/TSED0(LL,L)  !weighting factor 4
         
-        IF(LL+1<=KB)THEN !modeled erosion rate
+        IF(LL+1<=KB)THEN !modeled erosion rate in g/cm2/s
            ERATEMOD(L)=(SN00*EXP(SN11*LOG(ERATE(LL+1,L,NTAU0))+SN01*LOG(ERATE(LL,L,NTAU0)))&
                 +SN10*EXP(SN11*LOG(ERATE(LL+1,L,NTAU1))+SN01*LOG(ERATE(LL,L,NTAU1))))*BULKDENS(LL,L)*SQRT(1.0/SH_SCALE(L))
         ELSE !do not allow erosion through the bottom layer
@@ -282,16 +282,21 @@ SUBROUTINE SEDZLJ(L)
      ELSE
 
         ! For Layers One and Two (the newly deposited sediments)
-        ! The erosion rate for these layers is determined from 
+        ! The erosion rate (g/cm2/s) for these layers is determined from 
         ! Sedflume experiments and is based on average particle
         ! Size (D50AVG) 
+
         NSCTOT=NSCD(2)-NSCD(1) !difference in interpolant size class
         D50TMPP=D50AVG(L)-NSCD(1) !difference from local size class and lower interpolant
-        SN00=(TAUDD(2)-TAU(L))/(TAUDD(2)-TAUDD(1)) !weighting factor 1 for interpolation
-        SN10=(TAUDD(1)-TAU(L))/(TAUDD(1)-TAUDD(2)) !weigthing factor 2
-        SN01=D50TMPP/NSCTOT                        !weighting factor 3
-        SN11=(NSCTOT-D50TMPP)/NSCTOT               !weighting factor 4
-        ERATEMOD(L)=(SN00*EXP(SN11*LOG(ERATEND(NSC0,NTAU0))+SN01*LOG(ERATEND(NSC1,NTAU0)))+SN10*EXP(SN11*LOG(ERATEND(NSC0,NTAU1))+SN01*LOG(ERATEND(NSC1,NTAU1))))*BULKDENS(LL,L)*SQRT(1./SH_SCALE(L)) !log-linear interpolation
+!        SN00=(TAUDD(2)-TAU(L))/(TAUDD(2)-TAUDD(1)) !weighting factor 1 for interpolation
+!        SN10=(TAUDD(1)-TAU(L))/(TAUDD(1)-TAUDD(2)) !weigthing factor 2
+!        SN01=D50TMPP/NSCTOT                        !weighting factor 3
+!        SN11=(NSCTOT-D50TMPP)/NSCTOT               !weighting factor 4
+
+        SN00=A_ND(NSCD(1))*TAU(L)**N_ND(NSCD(1)) ! Erosion rate 1
+        SN10=A_ND(NSCD(2))*TAU(L)**N_ND(NSCD(2)) ! Erosion rate 2
+!        ERATEMOD(L)=(SN00*EXP(SN11*LOG(ERATEND(NSC0,NTAU0))+SN01*LOG(ERATEND(NSC1,NTAU0)))+SN10*EXP(SN11*LOG(ERATEND(NSC0,NTAU1))+SN01*LOG(ERATEND(NSC1,NTAU1))))*BULKDENS(LL,L)*SQRT(1./SH_SCALE(L)) !log-linear interpolation
+        ERATEMOD(L)=((SN10-SN00)/NSCTOT*D50TMPP+SN00)*BULKDENS(LL,L)*SQRT(1./SH_SCALE(L)) !linear interpolation around size class
      ENDIF
 
      ! Sort out Thicknesses and Erosion Rates
@@ -362,7 +367,7 @@ SUBROUTINE SEDZLJ(L)
 ! SED(L,1,k)=SEDS(L,1,k)+(SEDF(L,0,k)-SEDF(L,1,k))*WDTDZ !EFDC variable for suspended sediment concentration
  ! continue
 !  enddo
-  ETOTO(L)=ETOTO(L)/(DT) !total erosion rate
+  ETOTO(L)=ETOTO(L)/(DT) !total erosion rate (g/cm2 per timestep)
 
   TSSEDZLJ=TSSEDZLJ+SECNDS(T1TMP)   
   

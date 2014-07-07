@@ -3382,7 +3382,7 @@
       REAL(RKD)             ::KSW                    !NIKURADSE ROUGHNESS (APPROXIMATE 2.5*D50)
 
 
-! PT- All real values are explicitly specified as DOUBLE PRECISION for accuracy. 7/16/08
+!SEDZLJ Variables - All real values are explicitly specified as DOUBLE PRECISION for accuracy. Updated CAJ 07/2014
 !
 	  INTEGER::IMORPH_SEDZLJ
 	  INTEGER::ISEDTIME
@@ -3529,6 +3529,8 @@
 	  DOUBLE PRECISION,ALLOCATABLE,DIMENSION(:,:)::YBLFLUX     !(LCM,NSCM)
       REAL,ALLOCATABLE,DIMENSION(:)::DTOT !(LCM) 
       REAL,ALLOCATABLE,DIMENSION(:)::TAUTTOT !(LCM)
+      REAL,ALLOCATABLE,DIMENSION(:)::A_ND !(NSICM)
+      REAL,ALLOCATABLE,DIMENSION(:)::N_ND !(NSICM)
 
 ! End SEDZLJ variables
 

@@ -202,7 +202,7 @@ SUBROUTINE SEDIC
   READ (30,*)  (TAUCRITE(NSC),NSC=1,NSICM)
   READ (30,'(A80)') STR_LINE
   DO NSC=1,NSICM
-     READ(30,*)(ERATEND(NSC,M),M=1,ITBM)
+     READ(30,*) A_ND(NSC),N_ND(NSC)
   ENDDO
   ! Settling speed (DWS) calculated from D50 (micron) 
   ! input diameter using Cheng's model (1998).  Settling speed in cm/s
