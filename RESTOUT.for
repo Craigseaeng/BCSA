@@ -7,17 +7,22 @@ C **  SUBROUTINE RESTOUT WRITES A RESTART FILE
 C  
       USE GLOBAL  
 
+C     Create hydro. restart file 
       IF(IRSTYP.EQ.0)THEN  
         PRINT *,'Restart Snapshot @ Timeday: ',TIMEDAY
         OPEN(99,FILE='RESTART.OUT',STATUS='UNKNOWN')  
         CLOSE(99,STATUS='DELETE')  
         OPEN(99,FILE='RESTART.OUT',STATUS='UNKNOWN')  
-      ENDIF  
+      ENDIF
+
+C     Create crash file
       IF(IRSTYP.EQ.1)THEN  
         OPEN(99,FILE='CRASHST.OUT',STATUS='UNKNOWN')  
         CLOSE(99,STATUS='DELETE')  
         OPEN(99,FILE='CRASHST.OUT',STATUS='UNKNOWN')  
-      ENDIF  
+      ENDIF
+
+C     Create variables if restart value is -11
       IF(ISRESTO.EQ.-11)THEN  
         DO L=1,LC  
           HP(L)=-BELV(L)  
@@ -53,15 +58,21 @@ C
             SAL1(L,K)=MAX(SAL1(L,K),0.)  
           ENDDO  
         ENDDO  
-      ENDIF  
+      ENDIF
+
+C     Dynamic time stepping (EFDC.INP C8)
       IF(ISDYNSTP.EQ.0)THEN  
         TIME=DT*FLOAT(N)+TCON*TBEGIN  
         TIME=TIME/TCON  
       ELSE  
         TIME=TIMESEC/TCON  
-      ENDIF  
-      WRITE(99,909)N,TIME  
-      DO L=2,LA  
+      ENDIF
+
+C     Begin writing data to hydro. restart file
+      WRITE(99,908)N  
+      DO L=2,LA
+
+C       Writing default hydro. variables to hydro. restart file
         WRITE(99,906)HP(L),H1P(L),HWQ(L),H2WQ(L),BELV(L)  
         WRITE(99,907)UHDYE(L),UHDY1E(L),VHDXE(L),VHDX1E(L)  
         WRITE(99,907)(U(L,K),K=1,KC)  
@@ -72,7 +83,10 @@ C
         WRITE(99,907)(QQ1(L,K),K=0,KC)  
         WRITE(99,907)(QQL(L,K),K=0,KC)  
         WRITE(99,907)(QQL1(L,K),K=0,KC)  
-        WRITE(99,907)(DML(L,K),K=0,KC)  
+        WRITE(99,907)(DML(L,K),K=0,KC)
+        WRITE(99,907)QSUME(L),(QSUM(L,K),K=1,KC)
+        
+C       Write variable concentrations to hydro. restart file (EFDC.INP C6)  
         IF(ISCO(1).EQ.1)THEN  
           WRITE(99,907)(SAL(L,K),K=1,KC)  
           WRITE(99,907)(SAL1(L,K),K=1,KC)  
@@ -121,7 +135,7 @@ C
         ENDIF  
       ENDDO  
 
-      ! *** BOUNDARY CONDITIONS
+C     Write SAL,TEM,DYE, and SFL at boundaries to hydro. restart file
       DO M=1,4  
         IF(ISCO(M).EQ.1)THEN  
           DO LL=1,NCBS  
@@ -153,7 +167,9 @@ C
             WRITE(99,907)(CLON(LL,K,M),K=1,KC)  
           ENDDO  
         ENDIF  
-      ENDDO  
+      ENDDO
+
+C     Write TOX to hydro. restart file
       IF(ISCO(5).EQ.1)THEN  
         DO NT=1,NTOX  
           M=MSVTOX(NT)  
@@ -186,7 +202,9 @@ C
             WRITE(99,907)(CLON(LL,K,M),K=1,KC)  
           ENDDO  
         ENDDO  
-      ENDIF  
+      ENDIF
+      
+C     Write SED to hydro. restart file        
       IF(ISCO(6).EQ.1)THEN  
         DO NT=1,NSED  
           M=MSVSED(NT)  
@@ -219,7 +237,9 @@ C
             WRITE(99,907)(CLON(LL,K,M),K=1,KC)  
           ENDDO  
         ENDDO  
-      ENDIF  
+      ENDIF
+
+C     Write SND to hydro. restart file
       IF(ISCO(7).EQ.1)THEN  
         DO NT=1,NSND  
           M=MSVSND(NT)  
@@ -252,25 +272,31 @@ C
             WRITE(99,907)(CLON(LL,K,M),K=1,KC)  
           ENDDO  
         ENDDO  
-      ENDIF  
-      DO L=2,LA  
-        WRITE(99,907)QSUME(L),(QSUM(L,K),K=1,KC)  
-      ENDDO  
+      ENDIF
+
+C     Write hydro. flows
+C      DO L=2,LA  
+C        WRITE(99,907)QSUME(L),(QSUM(L,K),K=1,KC)  
+C      ENDDO
+
+C     Write if ISCHAN.GT.0 (EFDC.INP C14)
       IF(MDCHH.GE.1)THEN  
         DO NMD=1,MDCHH  
           WRITE(99,910)IMDCHH(NMD),JMDCHH(NMD),IMDCHU(NMD),JMDCHU(NMD),  
      &        IMDCHV(NMD),JMDCHV(NMD),QCHANU(NMD),QCHANV(NMD)  
         ENDDO  
-      ENDIF  
+      ENDIF
+
+C     Write if ISGWI.GT.0 (EFDC.INP C14)
       IF(ISGWIE.GE.1)THEN  
         DO L=2,LA  
           WRITE(99,907)AGWELV(L),AGWELV1(L)  
         ENDDO  
-      ENDIF  
+      ENDIF
+
       CLOSE(99)  
-C
-C *** SPECIAL FILES
-C
+
+C     Write if ISWAVE.GE.0 (EFDC.INP C14)
       IF(ISWAVE.GE.1)THEN  
         OPEN(1,FILE='WVQWCP.OUT',STATUS='UNKNOWN')  
         CLOSE(1, STATUS='DELETE')  
@@ -280,7 +306,9 @@ C
      &        QQWCR(L),QQ(L,0)  
         ENDDO  
         CLOSE(1)  
-      ENDIF  
+      ENDIF
+
+C     Open and write SAL variables to salt restart file
       IF(ISCO(1).GE.1.AND.ISTRAN(1).GT.0)THEN  
         OPEN(1,FILE='SALT.RST',STATUS='UNKNOWN')  
         CLOSE(1, STATUS='DELETE')  
@@ -289,7 +317,9 @@ C
           WRITE(1,912)L,IL(L),JL(L),(SAL(L,K),K=1,KC)  
         ENDDO  
         CLOSE(1)  
-      ENDIF  
+      ENDIF
+
+C     Open and write TEM variables to temp restart file
       IF(ISCO(2).GE.1.AND.ISTRAN(2).GT.0)THEN  
         OPEN(1,FILE='TEMP.RST',STATUS='UNKNOWN')  
         CLOSE(1, STATUS='DELETE')  
@@ -298,7 +328,9 @@ C
           WRITE(1,912)L,IL(L),JL(L),(TEM(L,K),K=1,KC),TEMB(L)  
         ENDDO  
         CLOSE(1)  
-      ENDIF  
+      ENDIF
+
+C     Wetting and drying activated with ISDRY=99 or ISDRY=-99
       IF(ISDRY.EQ.99)THEN  
         OPEN(1,FILE='RSTWD.OUT',STATUS='UNKNOWN')  
         CLOSE(1, STATUS='DELETE')  
@@ -309,9 +341,8 @@ C
         ENDDO  
         CLOSE(1)  
       ENDIF  
-C  
-C **  OUTPUT SALINITY AND TEMPATURE DATA ASSIMILATION  
-C  
+  
+C     OUTPUT SALINITY AND TEMPATURE DATA ASSIMILATION  
       IF(NLCDA.GT.0)THEN
         OPEN(1,FILE='DATAASM.OUT')  
         CLOSE(1,STATUS='DELETE')  
@@ -322,10 +353,12 @@ C
           ENDDO  
         ENDDO  
       ENDIF
- 5678 FORMAT(2I6,3E14.5)  
-C
+ 5678 FORMAT(2I6,3E14.5)
+
+C     Open and write sediment bed restart files at end of run
       IF(ISTRAN(6).GT.0.OR.ISTRAN(7).GT.0.AND.
-     &            ISDTXBUG.EQ.1.AND.N.EQ.NTS)THEN  
+     &            ISDTXBUG.EQ.1.AND.N.EQ.NTS)THEN
+
         OPEN(1,FILE='BEDRST.SED')  
         CLOSE(1,STATUS='DELETE')  
         OPEN(1,FILE='BEDRST.SED')  
@@ -338,7 +371,8 @@ C
             END DO  
           ENDIF  
         ENDDO  
-        CLOSE(1)  
+        CLOSE(1)
+
         OPEN(1,FILE='BEDRST.SND')  
         CLOSE(1,STATUS='DELETE')  
         OPEN(1,FILE='BEDRST.SND')  
@@ -351,7 +385,8 @@ C
             END DO  
           ENDIF  
         ENDDO  
-        CLOSE(1)  
+        CLOSE(1)
+
         OPEN(1,FILE='BEDRST.VDR')  
         CLOSE(1,STATUS='DELETE')  
         OPEN(1,FILE='BEDRST.VDR')  
@@ -359,7 +394,8 @@ C
         DO L=2,LA  
           WRITE(1,101)IL(L),JL(L),(VDRBED(L,K),K=1,KB)  
         ENDDO  
-        CLOSE(1)  
+        CLOSE(1)
+
         OPEN(1,FILE='BEDRST.POR')  
         CLOSE(1,STATUS='DELETE')  
         OPEN(1,FILE='BEDRST.POR')  
@@ -367,7 +403,8 @@ C
         DO L=2,LA  
           WRITE(1,101)IL(L),JL(L),(PORBED(L,K),K=1,KB)  
         ENDDO  
-        CLOSE(1)  
+        CLOSE(1)
+
         OPEN(1,FILE='BEDRST.ZHB')  
         CLOSE(1,STATUS='DELETE')  
         OPEN(1,FILE='BEDRST.ZHB')  
@@ -375,7 +412,8 @@ C
         DO L=2,LA  
           WRITE(1,101)IL(L),JL(L),ZELBEDA(L),HBEDA(L),(HBED(L,K),K=1,KB)  
         ENDDO  
-        CLOSE(1)  
+        CLOSE(1)
+
         OPEN(1,FILE='BEDRST.BDN')  
         CLOSE(1,STATUS='DELETE')  
         OPEN(1,FILE='BEDRST.BDN')  
@@ -383,7 +421,8 @@ C
         DO L=2,LA  
           WRITE(1,101)IL(L),JL(L),(BDENBED(L,K),K=1,KB)  
         ENDDO  
-        CLOSE(1)  
+        CLOSE(1)
+
         OPEN(1,FILE='BEDRST.ELV')  
         CLOSE(1,STATUS='DELETE')  
         OPEN(1,FILE='BEDRST.ELV')  
@@ -409,7 +448,8 @@ C
         IDUM=0  
         JDUM=0  
         WRITE(1,101)IDUM,JDUM,TMP1,TMP2,TMP3,TMP4  
-        CLOSE(1)  
+        CLOSE(1)
+
         OPEN(1,FILE='WATRST.SED')  
         CLOSE(1,STATUS='DELETE')  
         OPEN(1,FILE='WATRST.SED')  
@@ -422,7 +462,8 @@ C
             END DO  
           ENDIF  
         ENDDO  
-        CLOSE(1)  
+        CLOSE(1)
+
         OPEN(1,FILE='WATRST.SND')  
         CLOSE(1,STATUS='DELETE')  
         OPEN(1,FILE='WATRST.SND')  
@@ -435,7 +476,8 @@ C
             END DO  
           ENDIF  
         ENDDO  
-        CLOSE(1)  
+        CLOSE(1)
+
         OPEN(1,FILE='BEDRST.BDL')  
         CLOSE(1,STATUS='DELETE')  
         OPEN(1,FILE='BEDRST.BDL')  
@@ -448,7 +490,8 @@ C
             END DO  
           ENDIF  
         ENDDO  
-        CLOSE(1)  
+        CLOSE(1)
+
         OPEN(1,FILE='BEDRST.TOX')  
         CLOSE(1,STATUS='DELETE')  
         OPEN(1,FILE='BEDRST.TOX')  
@@ -459,7 +502,9 @@ C
           ENDDO  
         ENDDO  
         CLOSE(1)  
-      ENDIF  
+      ENDIF
+
+C Define output formats
   339 FORMAT(2I5,6F14.5)  
   101 FORMAT(2I5,18E13.5)  
   102 FORMAT(10X,18E13.5)  
@@ -482,7 +527,7 @@ C
   910 FORMAT(6I5,2X,E17.8,2X,E17.8)  
   911 FORMAT(2I5,2X,6E13.4)  
   912 FORMAT(3I5,12F7.3,5(15X,12F7.3))   ! *** DSLLC Single Line  
-  913 FORMAT(6I10,4F7.3)                 ! *** DSLLC Single Line 
-      RETURN  
-      END  
+  913 FORMAT(6I10,4F7.3)                 ! *** DSLLC Single Line
 
+      RETURN  
+      END  SUBROUTINE RESTOUT
