@@ -293,10 +293,10 @@ SUBROUTINE SEDZLJ(L)
 !        SN01=D50TMPP/NSCTOT                        !weighting factor 3
 !        SN11=(NSCTOT-D50TMPP)/NSCTOT               !weighting factor 4
 
-        SN00=A_ND(NSCD(1))*TAU(L)**N_ND(NSCD(1)) ! Erosion rate 1
-        SN10=A_ND(NSCD(2))*TAU(L)**N_ND(NSCD(2)) ! Erosion rate 2
+        SN00=A_ND(NSC0)*(TAU(L)/10)**N_ND(NSC0) ! Erosion rate 1 (cm/s) Values assume shear in Pascals so conversion made here
+        SN10=A_ND(NSC1)*(TAU(L)/10)**N_ND(NSC1) ! Erosion rate 2
 !        ERATEMOD(L)=(SN00*EXP(SN11*LOG(ERATEND(NSC0,NTAU0))+SN01*LOG(ERATEND(NSC1,NTAU0)))+SN10*EXP(SN11*LOG(ERATEND(NSC0,NTAU1))+SN01*LOG(ERATEND(NSC1,NTAU1))))*BULKDENS(LL,L)*SQRT(1./SH_SCALE(L)) !log-linear interpolation
-        ERATEMOD(L)=((SN10-SN00)/NSCTOT*D50TMPP+SN00)*BULKDENS(LL,L)*SQRT(1./SH_SCALE(L)) !linear interpolation around size class
+        ERATEMOD(L)=((SN10-SN00)/NSCTOT*D50TMPP+SN00)*BULKDENS(LL,L)*SQRT(1./SH_SCALE(L)) !linear interpolation around size class (g/cm2/s)
      ENDIF
 
      ! Sort out Thicknesses and Erosion Rates
@@ -312,8 +312,7 @@ SUBROUTINE SEDZLJ(L)
      ! ETOTO(L) = Total erosion at this cell
      ! ELAY(K) = Erosion from this layer of size class k
      ! ESED  =  Total erosion from layer
-     
-     WHERE(TAU(L)>=TCRE(1:NSCM))
+         WHERE(TAU(L)>=TCRE(1:NSCM))
         E(1:NSCM,L)=E(1:NSCM,L)+PER(1:NSCM,LL,L)*EBD(LL,L)
         ELAY(1:NSCM)=PER(1:NSCM,LL,L)*EBD(LL,L)
         TTEMP(1:NSCM,L)=PER(1:NSCM,LL,L)*TSED(LL,L)-ELAY(1:NSCM) !thickness due to each size class
