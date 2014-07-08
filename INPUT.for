@@ -2161,15 +2161,15 @@ C
 !***************************************************************
 !PT check the SED distribution in layers for particle class 1. 7/24/08
       IF (NSEDFLUME.GT.0)THEN
-        OPEN(UNIT=149,FILE='sedcheck.dat')
-        WRITE(149,*)'size class', 1
-        WRITE(149,*)'time    ','waterheight   ','  expval  ','DWS',
-     &'1stlayer   ','2ndlayer   ','3rdlayer   ','4thlayer  ','5thlayer',
-     &  'waterweight1','waterweight2','waterweight3','waterweight4',
-     &  'waterweight5','shear'
+!        OPEN(UNIT=149,FILE='sedcheck.dat')
+!        WRITE(149,*)'size class', 1
+!        WRITE(149,*)'time    ','waterheight   ','  expval  ','DWS',
+!     &'1stlayer   ','2ndlayer   ','3rdlayer   ','4thlayer  ','5thlayer',
+!     &  'waterweight1','waterweight2','waterweight3','waterweight4',
+!     &  'waterweight5','shear'
 !***************************************************************
         inquire(file='ensight.inp',exist=status)
-        if(status) then
+        IF(status) then
         ! PT create ensight output files.
            OPEN(UNIT=117,FILE='ensight.inp',STATUS='old')
            ISSKIP = 0  
