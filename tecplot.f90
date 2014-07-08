@@ -42,7 +42,11 @@ IF(.NOT.FIRSTTIME)THEN
 !		ENDIF
     OPEN (UNIT=111,FILE='tecplot2d.dat')
 	WRITE(111,'(A30)')'TITLE = "EFDC 2D Tecplot Data"'
+
+    ! Header for SNL variables
     WRITE(111,*)'VARIABLES= "I","J","X","Y","U","V","HP","TAU","D50","THCK","WvHt","DYE"'
+    
+    ! Header for BCSA variables
     WRITE(111,*)'VARIABLES= "I","J","X","Y","TAU","TAUAVG","VMAX"'
 
     OPEN (UNIT=112,FILE='vel_cal.dat')
@@ -234,7 +238,8 @@ DO J=3,JC-2
                     TAUMAX(L)=TAU(L)
                 ENDIF
             ENDIF
-                
+            
+            ! Write tecplot data line for active cell    
             WRITE(111,'(I4,1X,I4,1X,10E17.7)')I,J,DLON(LIJ(I,J)),DLAT(LIJ(I,J)), &
 			    UTMPA,VTMPA,HP(LIJ(I,J)),TAU(LIJ(I,J)),D50AVG(LIJ(I,J)),THCK(LIJ(I,J)), &
                 WVTMP,TAUMAX(L) !Sandia Coastal
@@ -244,11 +249,12 @@ DO J=3,JC-2
                 
         ELSE
 
-!			WRITE(111,'(I4,1X,I4,1X,12E13.4)')I,J,TEMPMSK,TEMPMSK,TEMPMSK,TEMPMSK,TEMPMSK, &
-!				TEMPMSK,0,0,TEMPMSK,TEMPMSK ! Sandia Coastal
+            ! Write tecplot data line for inactive cell
+			WRITE(111,'(I4,1X,I4,1X,12E13.4)')I,J,TEMPMSK,TEMPMSK,TEMPMSK,TEMPMSK,TEMPMSK, &
+				TEMPMSK,0,0,TEMPMSK,TEMPMSK ! Sandia Coastal
 
-			WRITE(111,'(I4,1X,I4,1X,12E13.4)')I,J,TEMPMSK,TEMPMSK, &
-			    TEMPMSK,TEMPMSK,TEMPMSK ! BCSA
+!			WRITE(111,'(I4,1X,I4,1X,12E13.4)')I,J,TEMPMSK,TEMPMSK, &
+!			    TEMPMSK,TEMPMSK,TEMPMSK ! BCSA
 	    ENDIF
     ENDDO
 ENDDO
