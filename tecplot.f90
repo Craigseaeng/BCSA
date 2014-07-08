@@ -12,13 +12,13 @@ SUBROUTINE TECPLOT
 !*********************************************
 USE GLOBAL
 IMPLICIT NONE
+
 INTEGER::I,J,LN,L,K,KK,ITEMPMSK,LOC
 INTEGER::ITEMP1,ITEMP2,JTEMP1,JTEMP2,SIGN
 INTEGER,DIMENSION(LCM)::NDAVG
 REAL::UTMP,VTMP,TEMPMSK,FLUXLOAD,NAN
 REAL::UTMPA,VTMPA,TEMPSTINC,LONTEMP,LATTEMP,WVTMP
 REAL,DIMENSION(KC)::CTEMP1
-!	REAL,DIMENSION(LCM,KC)::UTECPLOT,VTECPLOT
 REAL,DIMENSION(LCM)::UTMPS,VTMPS,VMAG,SURFEL
 REAL,DIMENSION(LCM)::DMAX,DAVG,VMAGC,CSMAX
 INTEGER,SAVE::nstep
@@ -29,7 +29,8 @@ LOGICAL,SAVE::FIRSTTIME=.FALSE.
 !REAL,DIMENSION(8)::Waterflowtot
 
 REAL,DIMENSION(LCM)::VMAX,TAUMAX,TAUAVG
-	
+
+! Create files if first call
 IF(.NOT.FIRSTTIME)THEN
 	
 !  This opens the Tecplot output file
@@ -39,7 +40,7 @@ IF(.NOT.FIRSTTIME)THEN
 !			WRITE(222,'("TURBINE",100(I6,6X))')(ICOUNT(I),I=1,TCOUNT)
 !			WRITE(222,'(7X,100(3X,I3,3X,I3))')((IJLTURB(I,1),IJLTURB(I,2)),I=1,TCOUNT)
 !		ENDIF
-	OPEN (UNIT=111,FILE='tecplot2d.dat')
+    OPEN (UNIT=111,FILE='tecplot2d.dat')
 	WRITE(111,'(A30)')'TITLE = "EFDC 2D Tecplot Data"'
     WRITE(111,*)'VARIABLES= "I","J","X","Y","U","V","HP","TAU","D50","THCK","WvHt","DYE"'
     WRITE(111,*)'VARIABLES= "I","J","X","Y","TAU","TAUAVG","VMAX"'
@@ -53,6 +54,7 @@ IF(.NOT.FIRSTTIME)THEN
     OPEN (UNIT=115,FILE='tracer_cal.dat')
     !WRITE(115,*)'Time,Salt1,Dye1,Salt2,Dye2,Salt5,Dye5,Salt6,Dye6,Salt7,Dye7'
 
+    ! Initialize variable for first time step
     DMAX=0.1
     CMAX=0.1
     VMAGC=0.0
@@ -64,6 +66,7 @@ IF(.NOT.FIRSTTIME)THEN
 
 	FIRSTTIME=.TRUE.
 ENDIF
+
 ! Timing parameters
 deltat=tidalp/float(ntsptc)
 nstep=nstep+1
@@ -85,7 +88,6 @@ ENDFORALL
 FORALL(L=2:LA)THCK(L)=TSEDT(L)-TSET0T(L)
 
 !  Water flux at cross sections
-
 !DO LOC=1,5
 !    Waterflowtot(LOC)=0.0
 !
@@ -115,14 +117,10 @@ FORALL(L=2:LA)THCK(L)=TSEDT(L)-TSET0T(L)
 !         ENDIF
 !       ENDDO
 !     ENDDO
-
 !ENDDO
 
-!
-!
 !*********************************************
-!    OUTPUT FOR TECPLOT, SEDIMENT DATA
-
+! Write tecplot2d.dat header at each call
 WRITE(111,*)'ZONE T="',tbegin+float(nstep-1)*deltat*float(ishprt)/86400.0,'" I= ' ,IC-4,' J= ' ,JC-4,' F=POINT'
 
 IF(STINC.LT.1)THEN
@@ -134,129 +132,126 @@ ENDIF
 DO  L=2,LA
 	I=IL(L)
 	J=JL(L)
+
 	IF(IWRSP(1)<1) NCORENO(I,J)=0
-
-	CBLTOT(L)=1.0E6*SUM(CBL(1,L,1:NSCM))
-	FORALL(KK=1:KC)CAVG(L,KK)=SUM(SED(L,KK,1:NSCM))
-	FORALL(K=1:KC-1)HEIGHT(I,J,K)=-(HP(L)-HP(L)*Z(K))
-	HEIGHT(I,J,KC)=0.0
-	FORALL(K=1:KC)
-		CTEMP1(K)=SUM(SED(L,K,1:NSCM))
-	ENDFORALL
-	CAVGT(L)=SUM(CTEMP1(1:KC)*DZC(1:KC))
-
-	FORALL(KS=1:NSCM)
-    	CAVGS(L,KS)=SUM(SED(L,1:KC,KS)*DZC(1:KC))
-	ENDFORALL
-
+	    CBLTOT(L)=1.0E6*SUM(CBL(1,L,1:NSCM))
+	    FORALL(KK=1:KC)CAVG(L,KK)=SUM(SED(L,KK,1:NSCM))
+	    FORALL(K=1:KC-1)HEIGHT(I,J,K)=-(HP(L)-HP(L)*Z(K))
+	    HEIGHT(I,J,KC)=0.0
+	    FORALL(K=1:KC)
+		    CTEMP1(K)=SUM(SED(L,K,1:NSCM))
+	    ENDFORALL
+	    CAVGT(L)=SUM(CTEMP1(1:KC)*DZC(1:KC))
+	    FORALL(KS=1:NSCM)
+    	    CAVGS(L,KS)=SUM(SED(L,1:KC,KS)*DZC(1:KC))
+	    ENDFORALL
 ENDDO 
+
+! Calculate surface elevations and velocities for all cells and levels
 DO L=2,LA
 	LN=LNC(L)
-!     WRITE(112,'(15E17.7)')DLON(L),DLAT(L),TAU(L),D50AVG(L),THCK(L)
     SURFEL(L)=(HP(L)+BELV(L))
+    VMAG(L)=SQRT(U(L,1)**2+V(L,1)**2) 
+
 	DO K=1,KC
-!		  UTMPS=U(LIJ(I,J),K) ! m/s
-!		  VTMPS=V(LIJ(I,J),K)  
+!		UTMPS=U(LIJ(I,J),K) ! m/s
+!		VTMPS=V(LIJ(I,J),K)  
 		UTMPS(L)=0.5*STCUV(L)*(RSSBCE(L)*U(L+1,K)+RSSBCW(L)*U(L,K))  ! m/s
 		VTMPS(L)=0.5*STCUV(L)*(RSSBCN(L)*V(LN ,K)+RSSBCS(L)*V(L,K)) 
-!		  UTECPLOT(L,K)=CUE(L)*UTMPS+CVE(L)*VTMPS  
-!		  VTECPLOT(L,K)=CUN(L)*UTMPS+CVN(L)*VTMPS
+!		UTECPLOT(L,K)=CUE(L)*UTMPS+CVE(L)*VTMPS  
+!		VTECPLOT(L,K)=CUN(L)*UTMPS+CVN(L)*VTMPS
 	ENDDO
-    VMAG(L)=SQRT(U(L,1)**2+V(L,1)**2) 
 ENDDO
-	
-WRITE(112,'(16F7.3)')  tbegin+float(nstep-1)*deltat*float(ishprt)/86400.0,SURFEL(LIJ(122,114)),U(LIJ(122,114),1),V(LIJ(122,114),1),SURFEL(LIJ(45,29)),U(LIJ(45,29),1),V(LIJ(45,29),1),SURFEL(LIJ(39,202)),U(LIJ(39,202),1),V(LIJ(39,202),1),SURFEL(LIJ(119,312)),U(LIJ(119,312),1),V(LIJ(119,312),1),SURFEL(LIJ(130,349)),U(LIJ(130,349),1),V(LIJ(130,349),1)
-!WRITE(113,'(6F7.3)')  tbegin+float(nstep-1)*deltat*float(ishprt)/86400.0,Waterflowtot(1),Waterflowtot(2),Waterflowtot(3),Waterflowtot(4),Waterflowtot(5)
-WRITE(115,'(11F7.3)')  tbegin+float(nstep-1)*deltat*float(ishprt)/86400.0,SAL(LIJ(122,114),1),DYE(LIJ(122,114),1),SAL(LIJ(45,29),1),DYE(LIJ(45,29),1),SAL(LIJ(39,202),1),DYE(LIJ(39,202),1),SAL(LIJ(119,312),1),DYE(LIJ(119,312),1),SAL(LIJ(130,349),1),DYE(LIJ(130,349),1)
 
-! 2 Dimensional Output
+! Write calibration data each call
+WRITE(112,'(16F7.3)')  tbegin+float(nstep-1)*deltat*float(ishprt)/86400.0,SURFEL(LIJ(122,114)), &
+    U(LIJ(122,114),1),V(LIJ(122,114),1),SURFEL(LIJ(45,29)),U(LIJ(45,29),1),V(LIJ(45,29),1), &
+    SURFEL(LIJ(39,202)),U(LIJ(39,202),1),V(LIJ(39,202),1),SURFEL(LIJ(119,312)),U(LIJ(119,312),1), &
+    V(LIJ(119,312),1),SURFEL(LIJ(130,349)),U(LIJ(130,349),1),V(LIJ(130,349),1)
 
+!WRITE(113,'(6F7.3)')  tbegin+float(nstep-1)*deltat*float(ishprt)/86400.0,Waterflowtot(1), &
+!    Waterflowtot(2),Waterflowtot(3),Waterflowtot(4),Waterflowtot(5)
+
+WRITE(115,'(11F7.3)')  tbegin+float(nstep-1)*deltat*float(ishprt)/86400.0,SAL(LIJ(122,114),1), &
+    DYE(LIJ(122,114),1),SAL(LIJ(45,29),1),DYE(LIJ(45,29),1),SAL(LIJ(39,202),1),DYE(LIJ(39,202),1), &
+    SAL(LIJ(119,312),1),DYE(LIJ(119,312),1),SAL(LIJ(130,349),1),DYE(LIJ(130,349),1)
+
+! 2D ouput of tecplot2d.out for all cells
 NAN=1.0/0.0
 TAUAVG=0.0
 
 DO J=3,JC-2
 	DO I=3,IC-2
 		
-	IF(LIJ(I,J)>0) THEN
-    L=LIJ(I,J)	
-    UTMPA=0.0
-    VTMPA=0.0
-    WVTMP=SQRT(8/G*WVENEP(L))
+	    IF(LIJ(I,J)>0) THEN
+            L=LIJ(I,J)	
+            UTMPA=0.0
+            VTMPA=0.0
+            WVTMP=SQRT(8/G*WVENEP(L))
+            VMAGC(L)=SQRT(UTMPA**2+VTMPA**2)
 
+            ! Calculate velocities for each water layer
+	        DO K=1,KC
+		        UTMPS=U(LIJ(I,J),K) ! m/s
+		        VTMPS=V(LIJ(I,J),K) 
+		        UTMPA=UTMPS(LIJ(I,J))*DZC(K)+UTMPA
+		        VTMPA=VTMPS(LIJ(I,J))*DZC(K)+VTMPA
+	        ENDDO	
 
-	DO K=1,KC
-		UTMPS=U(LIJ(I,J),K) ! m/s
-		VTMPS=V(LIJ(I,J),K) 
-		UTMPA=UTMPS(LIJ(I,J))*DZC(K)+UTMPA
-		VTMPA=VTMPS(LIJ(I,J))*DZC(K)+VTMPA
-	ENDDO	
-		
-	VMAGC(L)=SQRT(UTMPA**2+VTMPA**2)
+            ! 
+            IF(LMASKDRY(L).AND.HP(L).GT.0.3) THEN
+                CSMAX(L)=MAX(CSMAX(L),CAVGT(L))
+                DMAX(L)=MAX(DMAX(L),DYE(L,1))
 
-! Max water age = maximum dye age
-! Velocity
-! Average
+                DTOT(L)=DTOT(L)+DYE(L,1)
+                DAVG(L)=DTOT(L)/NDAVG(L)
 
-    IF(LMASKDRY(L).AND.HP(L).GT.0.3) THEN
+                TAUTTOT(L)=TAUTTOT(L)+TAU(L)
+                TAUAVG(L)=TAUTTOT(L)/NDAVG(L)
 
-        CSMAX(L)=MAX(CSMAX(L),CAVGT(L))
-        DMAX(L)=MAX(DMAX(L),DYE(L,1))
+                IF(I.EQ.130.AND.J.EQ.366)THEN
+                    TAUAVG(L)=0.0
+                ENDIF
 
-        DTOT(L)=DTOT(L)+DYE(L,1)
-        DAVG(L)=DTOT(L)/NDAVG(L)
+                NDAVG(L)=NDAVG(L)+1
+                UTMPA=0.0
+                VTMPA=0.0
 
-        TAUTTOT(L)=TAUTTOT(L)+TAU(L)
-        TAUAVG(L)=TAUTTOT(L)/NDAVG(L)
+	            DO K=1,KC
+		            UTMPS=U(L,K) ! m/s
+		            VTMPS=V(L,K)
+                    UTMPA=UTMPS(L)*DZC(K)+UTMPA
+		            VTMPA=VTMPS(L)*DZC(K)+VTMPA
+	            ENDDO
 
-        IF(I.EQ.130.AND.J.EQ.366)THEN
-        TAUAVG(L)=0.0
-        ENDIF
+                VMAGC(L)=SQRT(UTMPA**2+VTMPA**2)
 
-        NDAVG(L)=NDAVG(L)+1
+                IF(VMAGC(L).GT.VMAX(L).AND.VMAGC(L).NE.NAN) THEN
+                    VMAX(L)=VMAGC(L)
+                ENDIF
 
-    UTMPA=0.0
-    VTMPA=0.0
-	DO K=1,KC
-		UTMPS=U(L,K) ! m/s
-		VTMPS=V(L,K)
-        UTMPA=UTMPS(L)*DZC(K)+UTMPA
-		VTMPA=VTMPS(L)*DZC(K)+VTMPA
-	ENDDO
-    VMAGC(L)=SQRT(UTMPA**2+VTMPA**2)
-
-    IF(VMAGC(L).GT.VMAX(L).AND.VMAGC(L).NE.NAN) THEN
-        VMAX(L)=VMAGC(L)
-    ENDIF
-
-    IF(TAU(L).GT.TAUMAX(L).AND.TAU(L).NE.NAN) THEN
-        TAUMAX(L)=TAU(L)
-    ENDIF
-
-    ENDIF
+                IF(TAU(L).GT.TAUMAX(L).AND.TAU(L).NE.NAN) THEN
+                    TAUMAX(L)=TAU(L)
+                ENDIF
+            ENDIF
                 
-            WRITE(111,'(I4,1X,I4,1X,10E17.7)')I,J,DLON(LIJ(I,J)),DLAT(LIJ(I,J))&
-			,UTMPA,VTMPA,HP(LIJ(I,J)),TAU(LIJ(I,J)),D50AVG(LIJ(I,J)),THCK(LIJ(I,J)),WVTMP,TAUMAX(L) !Sandia Coastal
+            WRITE(111,'(I4,1X,I4,1X,10E17.7)')I,J,DLON(LIJ(I,J)),DLAT(LIJ(I,J)), &
+			    UTMPA,VTMPA,HP(LIJ(I,J)),TAU(LIJ(I,J)),D50AVG(LIJ(I,J)),THCK(LIJ(I,J)), &
+                WVTMP,TAUMAX(L) !Sandia Coastal
 
-!                WRITE(111,'(I4,1X,I4,1X,10E17.7)')I,J,DLON(LIJ(I,J)),DLAT(LIJ(I,J))&
-!				,TAUMAX(L),TAUAVG(L),CSMAX(L) !BCSA Average variables
+!           WRITE(111,'(I4,1X,I4,1X,10E17.7)')I,J,DLON(LIJ(I,J)),DLAT(LIJ(I,J)), &
+!				TAUMAX(L),TAUAVG(L),CSMAX(L) !BCSA Average variables
                 
-    ELSE
+        ELSE
 
-!				WRITE(111,'(I4,1X,I4,1X,12E13.4)')I,J,TEMPMSK,TEMPMSK,TEMPMSK,TEMPMSK,TEMPMSK,&
+!			WRITE(111,'(I4,1X,I4,1X,12E13.4)')I,J,TEMPMSK,TEMPMSK,TEMPMSK,TEMPMSK,TEMPMSK, &
 !				TEMPMSK,0,0,TEMPMSK,TEMPMSK ! Sandia Coastal
-			WRITE(111,'(I4,1X,I4,1X,12E13.4)')I,J,TEMPMSK,TEMPMSK,&
-			TEMPMSK,TEMPMSK,TEMPMSK ! BCSA
-	ENDIF
-	  
-! 2D Extractions
 
-!     IF(LIJ(I,J).EQ.2620)THEN
-!        WRITE(112,'("Loc1 ",15E17.7)') HP(LIJ(I,J)),UTMPA,VTMPA,WVTMP,TAU(LIJ(I,J)),CPGV
-!     ENDIF 
-       
+			WRITE(111,'(I4,1X,I4,1X,12E13.4)')I,J,TEMPMSK,TEMPMSK, &
+			    TEMPMSK,TEMPMSK,TEMPMSK ! BCSA
+	    ENDIF
     ENDDO
 ENDDO
 
-
 RETURN
-END SUBROUTINE
+END SUBROUTINE TECPLOT
