@@ -2,7 +2,7 @@ SUBROUTINE SEDIC
   USE GLOBAL
   IMPLICIT NONE
   INTEGER::CORE,I,J,L,LL,M,K,NS,VAR_BED,FDIR,NWV
-  INTEGER::IWV,JWV,NSKIP
+  INTEGER::IWV,JWV,NSKIP,ERROR
   CHARACTER(LEN=80)::STR_LINE
   !PT- real values are written in DOUBLE PRECISION. 7/16/08
   REAL::STWVHTMP,STWVTTMP,STWVDTMP
@@ -77,8 +77,14 @@ SUBROUTINE SEDIC
      TAUTEMP=0.0
      PNEW=0.0
      BDEN=0.0   
-     DO J=JC,1,-1
-        READ(20,'(120(I1,1X))')(NCORENO(I,J),I=1,IC)   
+     ! Read variable bed in I,J,core format for L=2,LA locations
+     DO L=2,LA 
+        READ(20,*,IOSTAT=ERROR) I,J,NCORENO(I,J)
+        IF(ERROR==1)THEN
+		  WRITE(*,'("READ ERROR IN CORE INPUT FILE")')  
+		  WRITE(8,'("READ ERROR IN CORE INPUT FILE")')  
+		  STOP 
+        ENDIF
      ENDDO
  !*************************************************************   
      DO CORE=1,INCORE !for each core of data      
