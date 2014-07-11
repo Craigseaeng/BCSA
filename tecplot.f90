@@ -40,23 +40,29 @@ IF(.NOT.FIRSTTIME)THEN
 !			WRITE(222,'("TURBINE",100(I6,6X))')(ICOUNT(I),I=1,TCOUNT)
 !			WRITE(222,'(7X,100(3X,I3,3X,I3))')((IJLTURB(I,1),IJLTURB(I,2)),I=1,TCOUNT)
 !		ENDIF
-    OPEN (UNIT=111,FILE='tecplot2d.dat')
+    OPEN (UNIT=111,FILE='tecplot2d.dat',STATUS='REPLACE')
 	WRITE(111,'(A30)')'TITLE = "EFDC 2D Tecplot Data"'
 
-    ! Header for SNL variables
+    ! Header for Sandia Coastal variables
     WRITE(111,*)'VARIABLES= "I","J","X","Y","U","V","HP","TAU","D50","THCK","WvHt","DYE"'
     
     ! Header for BCSA variables
-    WRITE(111,*)'VARIABLES= "I","J","X","Y","TAU","TAUAVG","VMAX"'
+    !WRITE(111,*)'VARIABLES= "I","J","X","Y","TAU","TAUAVG","VMAX"'
 
-    OPEN (UNIT=112,FILE='vel_cal.dat')
+    ! Velocity calibration file with surface elevation and velocity components at all MHS stations
+    OPEN (UNIT=112,FILE='vel_cal.dat', STATUS='REPLACE')
     !WRITE(112,*)'Time,H1,U1,V1,H2,U2,V2,H5,U5,V5,H6,U6,V6,H7,U7,V7'
 
-    !OPEN (UNIT=113,FILE='flow_cal.dat')
+    ! Flow calibration file with flow rates at all MHS stations
+    !OPEN (UNIT=113,FILE='flow_cal.dat', STATUS='REPLACE')
     !WRITE(113,*)'Time,Flow_1,Flow_2,Flow_5,Flow_6a,Flow_6'
 
-    OPEN (UNIT=115,FILE='tracer_cal.dat')
+    ! Tracer calibration file with salinity and dye conc. at all MHS stations
+    OPEN (UNIT=115,FILE='tracer_cal.dat', STATUS='REPLACE')
     !WRITE(115,*)'Time,Salt1,Dye1,Salt2,Dye2,Salt5,Dye5,Salt6,Dye6,Salt7,Dye7'
+
+    ! TSS calibration file with TSS concentrations at all MHS stations
+    OPEN (UNIT=105, FILE='tss_cal.dat', STATUS='REPLACE')
 
     ! Initialize variable for first time step
     DMAX=0.1
@@ -167,18 +173,26 @@ DO L=2,LA
 	ENDDO
 ENDDO
 
-! Write calibration data each call
-WRITE(112,'(16F7.3)')  tbegin+float(nstep-1)*deltat*float(ishprt)/86400.0,SURFEL(LIJ(122,114)), &
+! Write velocity calibration data each call
+WRITE(112,'(16F7.3)') tbegin+float(nstep-1)*deltat*float(ishprt)/86400.0,SURFEL(LIJ(122,114)), &
     U(LIJ(122,114),1),V(LIJ(122,114),1),SURFEL(LIJ(45,29)),U(LIJ(45,29),1),V(LIJ(45,29),1), &
     SURFEL(LIJ(39,202)),U(LIJ(39,202),1),V(LIJ(39,202),1),SURFEL(LIJ(119,312)),U(LIJ(119,312),1), &
     V(LIJ(119,312),1),SURFEL(LIJ(130,349)),U(LIJ(130,349),1),V(LIJ(130,349),1)
 
+! Write flow calibration data each call
 !WRITE(113,'(6F7.3)')  tbegin+float(nstep-1)*deltat*float(ishprt)/86400.0,Waterflowtot(1), &
 !    Waterflowtot(2),Waterflowtot(3),Waterflowtot(4),Waterflowtot(5)
 
-WRITE(115,'(11F7.3)')  tbegin+float(nstep-1)*deltat*float(ishprt)/86400.0,SAL(LIJ(122,114),1), &
+! Write tracer calibration data each call
+WRITE(115,'(11F7.3)') tbegin+float(nstep-1)*deltat*float(ishprt)/86400.0,SAL(LIJ(122,114),1), &
     DYE(LIJ(122,114),1),SAL(LIJ(45,29),1),DYE(LIJ(45,29),1),SAL(LIJ(39,202),1),DYE(LIJ(39,202),1), &
     SAL(LIJ(119,312),1),DYE(LIJ(119,312),1),SAL(LIJ(130,349),1),DYE(LIJ(130,349),1)
+
+! Write TSS calibration data each call (hard coded for single water layer (KC))
+DO K=1,NSCM
+    WRITE(105, 299) tbegin+float(nstep-1)*deltat*float(ishprt)/86400.0, K, SED(LIJ(122,114),1,K), &
+        SED(LIJ(45,29),1,K), SED(LIJ(39,202),1,K), SED(LIJ(119,312),1,K), SED(LIJ(130,349),1,K)
+ENDDO
 
 ! 2D ouput of tecplot2d.out for all cells
 NAN=1.0/0.0
@@ -258,6 +272,9 @@ DO J=3,JC-2
 	    ENDIF
     ENDDO
 ENDDO
+
+! Format for tss_cal.dat file
+299 FORMAT(F7.3,2X,I1,F7.3,F7.3,F7.3,F7.3,F7.3)
 
 RETURN
 END SUBROUTINE TECPLOT
