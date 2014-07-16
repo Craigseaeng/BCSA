@@ -1043,6 +1043,7 @@ C
       IF(ISTRAN(8).GE.1) ITMP=1  
       IF(ISWASP.GE.1)ITMP=1              ! 6/7/2005 a stoddard dsllc 
       IF(ISICM.GE.1) ITMP=1  
+      IF(ISRESTR.EQ.1) ITMP=1
 C  
       IF(ITMP.EQ.1)THEN  
 C  

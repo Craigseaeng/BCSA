@@ -6,16 +6,21 @@ C
       USE GLOBAL  
       IF(NTSMMT.LT.NTSPTC)THEN  
         DO L=2,LA  
-          READ(99,907)HMP(L),HLPF(L),QSUMELPF(L)  
-          READ(99,907)(UHLPF(L,K),K=1,KC)  
-          READ(99,907)(VHLPF(L,K),K=1,KC)  
+          READ(99,907)HMP(L),HP_OLD(L),HP_NEW(L)  
+          READ(99,907)(UHDY2LPF(L,K),K=1,KC)
+          READ(99,907)(VHDX2LPF(L,K),K=1,KC) 
           READ(99,907)(AHULPF(L,K),K=1,KC)  
           READ(99,907)(AHVLPF(L,K),K=1,KC)  
           READ(99,907)(SALLPF(L,K),K=1,KC)  
           READ(99,907)(ABLPF(L,K),K=1,KS)  
-C  
-C      READ(99,907)(ABEFF(L,K),K=1,KS)  
-C  
+          READ(99,907)(ABEFF(L,K),K=1,KS)  
+              
+          do_120: DO NS=1,NQSER
+            READ(99,907) (QSRTLPP(K,NS),K=1,KC)
+            READ(99,907) (QSRTLPN(K,NS),K=1,KC)
+          END DO do_120
+C
+ 
         ENDDO  
       ELSE  
         DO L=2,LA  

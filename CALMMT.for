@@ -4,6 +4,8 @@ C CHANGE RECORD
 C **  SUBROUTINE CALMMTF CALCULATES THE MEAN MASS TRANSPORT FIELD  
 C  
       USE GLOBAL  
+
+      REAL, DIMENSION(LCM):: UHDY2_SUM,VHDX2_SUM
 C
       LOGICAL INITIALIZE
       DATA INITIALIZE/.TRUE./
@@ -16,7 +18,8 @@ C
       INITIALIZE=.FALSE.
       IF(NTSMMT.LT.NTSPTC)THEN  
         DO L=1,LC  
-          HLPF(L)=0.  
+          HLPF(L)=0.
+          HP_OLD(L) = HP(L)  
           QSUMELPF(L)=0.  
           UELPF(L)=0.  
           VELPF(L)=0.  
@@ -66,6 +69,10 @@ C
             DYELPF(L,K)=0.  
             UHLPF(L,K)=0.  
             VHLPF(L,K)=0.  
+
+            UHDY2LPF(L,K)=0.  ! New Flux Variables
+            VHDX2LPF(L,K)=0.
+
             QSUMLPF(L,K)=0.  
           ENDDO  
         ENDDO  
@@ -120,6 +127,7 @@ C
       ELSE  
         DO L=1,LC  
           HLPF(L)=0.  
+          HP_OLD(L) = HP(L)
           QSUMELPF(L)=0.  
           UELPF(L)=0.  
           VELPF(L)=0.  
@@ -172,7 +180,11 @@ C
             UIRT(L,K)=0.  
             ULPF(L,K)=0.  
             UTLPF(L,K)=0.  
-            VHLPF(L,K)=0.  
+            VHLPF(L,K)=0.
+            
+            UHDY2LPF(L,K)=0. ! New flux variables
+            VHDX2LPF(L,K)=0.
+              
             QSUMLPF(L,K)=0.  
             VIRT(L,K)=0.  
             VLPF(L,K)=0.  
@@ -307,8 +319,15 @@ C
             TEMLPF(L,K)=TEMLPF(L,K)+TEM(L,K)  
             SFLLPF(L,K)=SFLLPF(L,K)+SFL(L,K)  
             DYELPF(L,K)=DYELPF(L,K)+DYE(L,K)  
-            UHLPF(L,K)=UHLPF(L,K)+UHDYWQ(L,K)/DYU(L)  
-            VHLPF(L,K)=VHLPF(L,K)+VHDXWQ(L,K)/DXV(L)  
+            UHLPF(L,K)=UHLPF(L,K)+UHDY(L,K)/DYU(L) !  Changed to not be WQ dependent  
+            VHLPF(L,K)=VHLPF(L,K)+VHDX(L,K)/DXV(L) 
+
+C **        OUTPUT UHDY2(L,K) TO UHDY2LPF(L,K)
+C **        OUTPUT VHDX2(L,K) TO VHDX2LPF(L,K)
+C
+            UHDY2LPF(L,K)=UHDY2LPF(L,K)+UHDY2(L,K)
+            VHDX2LPF(L,K)=VHDX2LPF(L,K)+VHDX2(L,K)
+            
             QSUMLPF(L,K)=QSUMLPF(L,K)+QSUM(L,K)  
           ENDDO  
         ENDDO  
@@ -439,15 +458,23 @@ C
             TEMLPF(L,K)=TEMLPF(L,K)+TEM(L,K)  
             SFLLPF(L,K)=SFLLPF(L,K)+SFL(L,K)  
             DYELPF(L,K)=DYELPF(L,K)+DYE(L,K)  
-            UHLPF(L,K)=UHLPF(L,K)+UHDYWQ(L,K)/DYU(L)  
+            UHLPF(L,K)=UHLPF(L,K)+UHDY(L,K)/DYU(L)  
             UIRT(L,K)=UIRT(L,K)+DT*U(L,K)  
             ULPF(L,K)=ULPF(L,K)+U(L,K)  
             UTLPF(L,K)=UTLPF(L,K)+DT*(FLOAT(NMMT)-0.5)*U(L,K)  
-            VHLPF(L,K)=VHLPF(L,K)+VHDXWQ(L,K)/DXV(L)  
+            VHLPF(L,K)=VHLPF(L,K)+VHDX(L,K)/DXV(L)  
             QSUMLPF(L,K)=QSUMLPF(L,K)+QSUM(L,K)  
             VIRT(L,K)=VIRT(L,K)+DT*V(L,K)  
             VLPF(L,K)=VLPF(L,K)+V(L,K)  
             VTLPF(L,K)=VTLPF(L,K)+DT*(FLOAT(NMMT)-0.5)*V(L,K)  
+
+C
+C **        OUTPUT UHDY2(L,K) TO UHDY2LPF(L,K)
+C **        OUTPUT VHDX2(L,K) TO VHDX2LPF(L,K)
+C
+            UHDY2LPF(L,K)=UHDY2LPF(L,K)+UHDY2(L,K)
+            VHDX2LPF(L,K)=VHDX2LPF(L,K)+VHDX2(L,K)
+
           ENDDO  
         ENDDO  
         DO NT=1,NTOX  
@@ -574,7 +601,14 @@ C
             DYELPF(L,K)=DYELPF(L,K)*FLTWT  
             UHLPF(L,K)=FLTWT*UHLPF(L,K)  
             VHLPF(L,K)=FLTWT*VHLPF(L,K)  
-            QSUMLPF(L,K)=FLTWT*QSUMLPF(L,K)  
+            QSUMLPF(L,K)=FLTWT*QSUMLPF(L,K) 
+C
+C **        OUTPUT UHDY2(L,K) TO UHDY2LPF(L,K)
+C **        OUTPUT VHDX2(L,K) TO VHDX2LPF(L,K)
+C
+            UHDY2LPF(L,K)=FLTWT*UHDY2LPF(L,K)
+            VHDX2LPF(L,K)=FLTWT*VHDX2LPF(L,K)    
+         
           ENDDO  
         ENDDO  
         DO NSC=1,NSED  
@@ -684,6 +718,13 @@ C
             VLPF(L,K)=FLTWT*VLPF(L,K)  
             VTLPF(L,K)=FLTWT*VTLPF(L,K)  
             VPZ(L,K)=FLTWT*VPZ(L,K)  
+C
+C **        OUTPUT UHDY2(L,K) TO UHDY2LPF(L,K)
+C **        OUTPUT VHDX2(L,K) TO VHDX2LPF(L,K)
+C
+            UHDY2LPF(L,K)=FLTWT*UHDY2LPF(L,K)
+            VHDX2LPF(L,K)=FLTWT*VHDX2LPF(L,K)
+
           ENDDO  
         ENDDO  
         DO NSC=1,NSED  
@@ -816,6 +857,87 @@ C
           QYNVP=QYNVP+VVPT(L,K)*DZC(K)*DXV(L)  
         ENDDO  
       ENDDO  
+
+C **************************************************************************
+C  USE MASS BALANCE TO ADJUST WATER DEPTH CHANGE
+C
+C  UHDY2_SUM = TOTAL WATER VOLUME FLUX AT i-1/2 DURING AVERAGING PERIOD (m**3)
+C  VHDX2_SUM = TOTAL WATER VOLUME FLUX AT j-1/2 DURING AVERAGING PERIOD (m**3)
+C
+      UHDY2_SUM = 0.0    ! ARRAY OPERATION
+      VHDX2_SUM = 0.0    ! ARRAY OPERATION
+C
+C  SUM FLUXES IN WATER COLUMN
+C
+      do_1491: DO L=2,LA 
+	  do_1492: DO K=1,KC
+	    UHDY2_SUM(L) = UHDY2_SUM(L) + DZC(K)*DT*UHDY2LPF(L,K)/FLTWT
+	    VHDX2_SUM(L) = VHDX2_SUM(L) + DZC(K)*DT*VHDX2LPF(L,K)/FLTWT
+	  END DO do_1492
+	END DO do_1491
+C
+C  ADJUST WATER DEPTH SO AS TO CONSERVE MASS
+C
+      do_1493: DO L=2,LA
+	  HP_NEW(L) = HP_OLD(L) + DXYIP(L)*
+     +      (UHDY2_SUM(L)-UHDY2_SUM(L+1)+VHDX2_SUM(L)-VHDX2_SUM(LNC(L)))
+C
+C  PREVENT CELL FROM DRYING OUT
+C
+        HP_NEW(L) = MAX(HP_NEW(L), HDRY)
+C
+      END DO do_1493
+C
+C  OPEN BOUNDARY:  WEST
+C
+      do_1501: DO LL=1,NPBW
+        L=LPBW(LL)
+	  HP_NEW(L) = HP(L)
+	END DO do_1501
+C
+C  OPEN BOUNDARY:  EAST
+C
+      do_1502: DO LL=1,NPBE
+        L=LPBE(LL)
+	  HP_NEW(L) = HP(L)
+	END DO do_1502
+C
+C  OPEN BOUNDARY:  SOUTH
+C
+      do_1503: DO LL=1,NPBS
+        L=LPBS(LL)
+	  HP_NEW(L) = HP(L)
+	END DO do_1503
+C
+C  OPEN BOUNDARY:  NORTH
+C
+      do_1504: DO LL=1,NPBN
+        L=LPBN(LL)
+	  HP_NEW(L) = HP(L)
+	END DO do_1504
+C
+C  INFLOW BOUNDARIES
+C
+      do_1505: DO LL=1,NQSIJ
+        L=LQS(LL)
+	  HP_NEW(L) = HP(L)
+	END DO do_1505
+C
+C  PREVENT NEGATIVE WATER DEPTHS
+C
+      do_1506: DO L=2,LA
+	  IF (HP_NEW(L).LE.0.0)	THEN
+	    I=IL(L)
+	    J=JL(L)
+	    WRITE (8888,8001)N,I,J,HP_NEW(L),HP_OLD(L),HP(L)
+ 8001     FORMAT (5X,'N, I, J, HP_NEW, HP_OLD, HP =',I6,2I4,3E12.4)
+C
+	    HP_NEW(L) = HDRY
+        ENDIF
+      END DO do_1506
+C
+C
+C**********************************************************************C
 C  
 C **  OUTPUT RESIDUAL TRANSPORT TO FILE RESTRAN.OUT  
 C  
@@ -834,15 +956,21 @@ C
             I=ILLT(LT)  
             J=JLLT(LT)  
             L=LIJ(I,J)  
-            WRITE(98,907)HMP(L),HLPF(L),QSUMELPF(L)  
-            WRITE(98,907)(UHLPF(L,K),K=1,KC)  
-            WRITE(98,907)(VHLPF(L,K),K=1,KC)  
+            WRITE(98,907)HMP(L),HP_OLD(L),HP_NEW(L)  
+            WRITE (98,907) (UHDY2LPF(L,K),K=1,KC)
+            WRITE (98,907) (VHDX2LPF(L,K),K=1,KC) 
             WRITE(98,907)(AHULPF(L,K),K=1,KC)  
             WRITE(98,907)(AHVLPF(L,K),K=1,KC)  
             WRITE(98,907)(SALLPF(L,K),K=1,KC)  
             WRITE(98,907)(ABLPF(L,K),K=1,KS)  
             WRITE(98,907)(ABEFF(L,K),K=1,KS)  
           ENDDO  
+
+          do_1510: DO NS=1,NQSER
+              WRITE (98,907) (QSRTLPP(K,NS),K=1,KC)
+              WRITE (98,907) (QSRTLPN(K,NS),K=1,KC)
+          END DO do_1510
+
         ELSE  
           DO LT=2,LALT  
             I=ILLT(LT)  
@@ -859,6 +987,7 @@ C
             WRITE(98,907)(VPY(L,K),K=1,KS)  
             WRITE(98,907)(ABLPF(L,K),K=1,KS)  
           ENDDO  
+C
         ENDIF  
         CLOSE(98)  
       ENDIF  

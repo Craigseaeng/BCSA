@@ -22,20 +22,21 @@ C     Read time step of restart record
 C     Cycle through 1D array of active cells
       DO L=2,LA  
         IF(ISRESTI.EQ.1)THEN  
-          !IF(IMORPH.EQ.0)THEN    PMC-RESTOUT ALWAYS WRITES BELV
-          !  READ(1,*,ERR=1001)HP(L),H1P(L),HWQ(L),H2WQ(L)  
-          !ELSE  
-            READ(1,*,ERR=1001)HP(L),H1P(L),HWQ(L),H2WQ(L),BELV(L)  
-          !ENDIF  
-        ELSE  
+!          !IF(IMORPH.EQ.0)THEN    PMC-RESTOUT ALWAYS WRITES BELV
+!          !  READ(1,*,ERR=1001)HP(L),H1P(L),HWQ(L),H2WQ(L)  
+!          !ELSE  
+!            READ(1,*,ERR=1001)HP(L),H1P(L),HWQ(L),H2WQ(L),BELV(L)  
+!          !ENDIF  
+!        ELSE  
           READ(1,*,ERR=1002)HP(L),H1P(L),HWQ(L),H2WQ(L),BELTMP  
-          IF(BELTMP.NE.BELV(L))THEN  
-            ISBELVC=1  
-            WRITE(6,600)IL(L),JL(L),BELTMP,BELV(L)  
-            HP(L)=HP(L)+BELTMP-BELV(L)  
-            H1P(L)=H1P(L)+BELTMP-BELV(L)  
-            HWQ(L)=HWQ(L)+BELTMP-BELV(L)  
-            H2WQ(L)=H2WQ(L)+BELTMP-BELV(L)  
+          IF(BELTMP.NE.BELV(L))THEN  ! NEED TO DOUBLE CHECK HOW BELTMP IS WRITTEN CAJ
+            BELV(L)=-BELTMP
+!            ISBELVC=1  
+!            WRITE(6,600)IL(L),JL(L),BELTMP,BELV(L)  
+            HP(L)=HP(L)-BELV(L)  
+            H1P(L)=H1P(L)-BELV(L)  
+            HWQ(L)=HWQ(L)-BELV(L)  
+            H2WQ(L)=H2WQ(L)-BELV(L)  
           ENDIF  
         ENDIF  
         IF(HP(L).LT.0.0.OR.H1P(L).LT.0.0)THEN  
@@ -56,6 +57,8 @@ C     Cycle through 1D array of active cells
         READ(1,*,ERR=1010)(QQL(L,K),K=0,KC)  
         READ(1,*,ERR=1011)(QQL1(L,K),K=0,KC)  
         READ(1,*,ERR=1012)(DML(L,K),K=0,KC)  
+        READ(1,*) QSUME(L),(QSUM(L,K),K=1,KC) ! Missing from earlier version CAJ
+
         IF(ISCI(1).EQ.1)THEN  
           READ(1,*,ERR=1013)(SAL(L,K),K=1,KC)  
           READ(1,*,ERR=1014)(SAL1(L,K),K=1,KC)  

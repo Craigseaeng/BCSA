@@ -136,8 +136,8 @@ SUBROUTINE SHOWVAL
   ! *** INCREMENT THE SCREEN COUNTER
   JSHPRT=JSHPRT+1
   IF(JSHPRT.LT.ISHPRT)RETURN
-  if(isveg==1.and.outputflag/=0.or.istran(3).or.ISTRAN(8))call tecplot !User defined output subroutine for Tecplot SCJ
-  !call tecplot !User defined output subroutine for Tecplot SCJ
+!  if(isveg==1.and.outputflag/=0.or.istran(3).or.ISTRAN(8))call tecplot !User defined output subroutine for Tecplot 
+  call tecplot !User defined output subroutine for Tecplot 
   inquire(file='ensight.inp',exist=status)
   if(status) call ensight
   JSHPRT=1

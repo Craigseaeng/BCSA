@@ -78,6 +78,16 @@ C
       UHDYE(L)=UHDY1E(L)
       VHDXE(L)=VHDX1E(L)
       ENDDO
+!C   
+!C     CALCULATE U & V
+!C
+!      do_165: DO K=1,KC
+!        do_175: DO L=2,LA
+!          LS=LSC(L)
+!          U(L,K)=UHDY1(L,K)/(DYU(L)*0.5*(HP(L)+HP(L-1)))
+!          V(L,K)=VHDX1(L,K)/(DXV(L)*0.5*(HP(L)+HP(LS)))
+!        END DO do_175
+!      END DO do_165
 C
 C----------------------------------------------------------------------C
 C
@@ -213,7 +223,7 @@ C**********************************************************************C
 C     
 C **  ADJUST THE STEADY OR INITIAL MEAN MASS TRANSPORT FIELD  
 C
-      CALL ADJMMT
+!      CALL ADJMMT
 C
 C**********************************************************************C
 C
@@ -364,8 +374,19 @@ C
       VHDXE(L)=VHDXE(L)+VHDX(L,K)*DZC(K)
       ENDDO
       ENDDO
+
+!C     
+!C         CALCULATE U & V
+!C
+!          do_355: DO K=1,KC
+!            do_365: DO L=2,LA
+!              LS=LSC(L)
+!              U(L,K)=UHDY1(L,K)/(DYU(L)*0.5*(HP(L)+HP(L-1)))
+!              V(L,K)=VHDX1(L,K)/(DXV(L)*0.5*(HP(L)+HP(LS)))
+!            END DO do_365
+!	    END DO do_355  
 C
-c      CALL ADJMMT
+!      CALL ADJMMT
 C
       DO K=1,KC
       DO LL=1,NCBS

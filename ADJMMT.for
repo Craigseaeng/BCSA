@@ -21,8 +21,8 @@ C
 C**********************************************************************C
 C
       USE GLOBAL 
-      REAL,SAVE,ALLOCATABLE,DIMENSION(:)::DIVERTE
-      	ALLOCATE(DIVERTE(LCM))
+      REAL,DIMENSION(LCM)::DIVERTE
+
 C
 C**********************************************************************C
 C
@@ -91,9 +91,9 @@ C----------------------------------------------------------------------C
       ENDDO
 C
       ITER=0
-      WRITE(6,6001)ITER,DIVERTEG
-      WRITE(6,6002)DIVMAX,IMAX,JMAX
-      WRITE(6,6003)DIVMIN,IMIN,JMIN
+!      WRITE(6,6001)ITER,DIVERTEG
+!      WRITE(6,6002)DIVMAX,IMAX,JMAX
+!      WRITE(6,6003)DIVMIN,IMIN,JMIN
 C
  6001 FORMAT('  ITER=',I10,3X,'DIVERTEG=',E14.4)
  6002 FORMAT('  DIVMAX=',E14.4,5X,'I,J=',(2I10))
@@ -390,9 +390,9 @@ C
       ENDIF
       ENDDO
 C
-      WRITE(6,6001)ITER,DIVERTEG
-      WRITE(6,6002)DIVMAX,IMAX,JMAX
-      WRITE(6,6003)DIVMIN,IMIN,JMIN
+!      WRITE(6,6001)ITER,DIVERTEG
+!      WRITE(6,6002)DIVMAX,IMAX,JMAX
+!      WRITE(6,6003)DIVMIN,IMIN,JMIN
 C
 C**********************************************************************C
 C
